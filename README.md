@@ -2,9 +2,9 @@
 
 Migrating Alteon between GEL Entitlements.
 
-## Installation
+## Downloading
 
-Download the release version of this project and upload to vDirect.
+Download the release version of this project 'gelMigrationTool.zip' and upload it to vDirect.
 
 ## How to install
 
