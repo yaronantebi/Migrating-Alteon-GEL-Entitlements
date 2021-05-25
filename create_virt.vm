@@ -1,0 +1,14 @@
+#haltOnDeviceError(true)
+
+
+    #param($virt_name)
+    #param($virt_vip)
+
+    ## create virt
+    /c/slb/virt ${virt_name}
+    ena
+    ipver v4
+    vip $virt_vip
+
+
+#end
