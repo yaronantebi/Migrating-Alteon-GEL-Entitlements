@@ -21,9 +21,11 @@ Download the release version of this project and upload to vDirect.
 ![](https://i.imgur.com/3qBekX7.png)
 
 ## Outputs
-#####HTML
+- HTML
+
 ![](https://i.imgur.com/yyiAazK.png)
-#####RAW
+- RAW
+
 ![](https://i.imgur.com/W2DANqS.png)
 
 ## Contributing
