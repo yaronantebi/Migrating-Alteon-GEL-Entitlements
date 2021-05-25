@@ -35,9 +35,6 @@ Copyright 2021 Radware – All Rights Reserved
 ## License
 [Apache2.0](https://choosealicense.com/licenses/apache-2.0/)
 
-## Mail Snapshot
-![](https://i.imgur.com/gCW3gzx.png)
-
 ## Disclaimer
 There is no warranty, expressed or implied, associated with this product.
 Use at your own risk.
