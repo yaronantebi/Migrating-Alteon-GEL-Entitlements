@@ -1,22 +1,41 @@
 package com.radware.vdirect.ps
 
+import com.radware.alteon.api.AdcTemplateDevice
+import com.radware.alteon.api.AdcTemplateParameter
+import com.radware.alteon.sdk.IAdcInstance
 import com.radware.alteon.workflow.impl.WorkflowAdaptor
 import com.radware.alteon.workflow.impl.java.Action
+import com.radware.alteon.workflow.impl.java.ActionInfo
 import com.radware.alteon.workflow.impl.java.Outputs
 import com.radware.alteon.workflow.impl.java.Param
 import com.radware.alteon.workflow.impl.java.Device
 import com.radware.alteon.workflow.impl.java.Workflow
 import com.radware.alteon.workflow.impl.DeviceConnection
 import com.radware.vdirect.client.api.DeviceType
+import com.radware.vdirect.scripting.ActionResult
+import com.radware.vdirect.scripting.RunNextResult
+import com.radware.vdirect.scripting.RunnableAction
+import com.radware.vdirect.server.VDirectServerClient
+import com.vmware.vim25.mo.LicenseManager
 import groovy.json.JsonBuilder
 import groovy.text.GStringTemplateEngine
 import groovyx.net.http.HTTPBuilder
+import org.codehaus.groovy.runtime.callsite.CallSite
 import org.slf4j.Logger
 import org.springframework.beans.factory.annotation.Autowired
 import com.radware.vdirect.ps.exceptions.*
+import sun.security.krb5.internal.CredentialsUtil
+import org.codehaus.groovy.runtime.ScriptBytecodeAdapter
+
+import javax.ws.rs.client.WebTarget;
+
 import static groovyx.net.http.ContentType.JSON
 import static groovyx.net.http.Method.POST
 import com.radware.vdirect.ps.MigrateResults
+import com.radware.vdirect.scripting.RunAs
+import com.radware.vdirect.scripting.RunNextResult
+
+
 
 @Workflow(createAction = 'init',
         deleteAction = 'delete')
@@ -25,6 +44,9 @@ class GELMigrationTool {
     Logger log
     @Autowired
     WorkflowAdaptor workflow
+    @Autowired
+    VDirectServerClient vdirect
+
 
     private String SERVERREPORT = "/api/runnable/Plugin/license/serverReport/sync"
     private String ALTEONSTATUS = "/api/runnable/Plugin/license/alteonStatus/sync"
@@ -36,13 +58,18 @@ class GELMigrationTool {
         log.info('I was just created..')
     }
 
+    @ActionInfo('migrateTool')
+    RunnableAction preAllocateAlteonLicense (RunnableAction parameters) {
+        fillDeviceWithStandaloneAdcNames(parameters)
+    }
+
     @Action(visible = true, resultType = 'text/html')
     @Outputs(@Param(name = 'output', type = 'string'))
     String migrateTool(
-            @Device(name = 'alteonArr', prompt = "Alteon Array", type = DeviceType.alteon, maxLength = -1) DeviceConnection[] alteonArr,
+            @Param(name = 'alteon', prompt = "Alteon Array", type = 'string', maxLength = -1) String[] alteonArr,
             @Param(name = "UserName", prompt = "vDirect User Name", type = 'string', defaultValue = "root", required = true) String userName,
             @Param(name = "UserPassword", prompt = "vDirect User Password", type = 'string', format = 'password', defaultValue = "radware", required = true) String userPassword,
-            @Param(name = "newEntitlement", prompt = 'New Entitlement', type = 'string', defaultValue = 'da72-82b5-8c19-4be1-9f1d-c9ba-46cf-8238', required = true) String newEntitlement
+            @Param(name = "newEntitlement", prompt = 'New Entitlement', type = 'string', required = true) String newEntitlement
     ) {
         List<MigrateResults> results = []
 
@@ -257,5 +284,20 @@ class GELMigrationTool {
             '''
         def engine = new GStringTemplateEngine()
         return engine.createTemplate(template).make(binding).toString()
+    }
+
+    private RunnableAction fillDeviceWithStandaloneAdcNames (RunnableAction parameters) {
+        parameters.getParameter('alteon').ifPresent { AdcTemplateParameter p ->
+            p.setValues(getStandaloneAdcs())
+        }
+        parameters
+    }
+
+    List<String> getStandaloneAdcs() {
+        List<String> names = new ArrayList<>()
+        for (IAdcInstance instance : vdirect.adcManager.list()) {
+            names.add(instance.name)
+        }
+        return names
     }
 }
