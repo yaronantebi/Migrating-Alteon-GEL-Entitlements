@@ -36,7 +36,6 @@ import com.radware.vdirect.scripting.RunAs
 import com.radware.vdirect.scripting.RunNextResult
 
 
-
 @Workflow(createAction = 'init',
         deleteAction = 'delete')
 class GELMigrationTool {
@@ -59,7 +58,7 @@ class GELMigrationTool {
     }
 
     @ActionInfo('migrateTool')
-    RunnableAction preAllocateAlteonLicense (RunnableAction parameters) {
+    RunnableAction preAllocateAlteonLicense(RunnableAction parameters) {
         fillDeviceWithStandaloneAdcNames(parameters)
     }
 
@@ -79,106 +78,101 @@ class GELMigrationTool {
         String VDIRECTIP = "localhost:2189"
 
         alteonArr.each { device ->
-            String deviceName = device.getRegisteredDevice().getId().getDisplayName()
+            //String deviceName = device.getRegisteredDevice().getId().getDisplayName()
+            String deviceName = device
             String sourceEntitlement
             Integer currentBandwitdh
             Integer featureCount
             Integer used
 
-            if (!device.isNetworkReachable(5000)) {
-                log.error String.format("device is not reachable skipping")
-                results.add(new MigrateResults(deviceName, '', '', false,
-                        0, "Alteon is not reachable."))
-            } else {
-                log.info String.format("Starting Migrate of Alteon %s", deviceName)
-                //set input json for alteon status
-                def json = new JsonBuilder()
-                def baseContext = json alteon: deviceName
+            log.info String.format("Starting Migrate of Alteon %s", deviceName)
+            //set input json for alteon status
+            def json = new JsonBuilder()
+            def baseContext = json alteon: deviceName
 
-                // check alteon status
-                def deviceStatus = httpWithRetry(VDIRECTIP, ALTEONSTATUS, mainAuthHeader, POST, baseContext)
-                if (deviceStatus) {
-                    if ((deviceStatus.parameters.entitlementId != newEntitlement) &&
-                            (deviceStatus.parameters.throughputCapacity != "1") &&
-                            (deviceStatus.parameters.licenseEnabled)) {
-                        log.info String.format('alteon %s has license from other entitlement, continue.', device.getManagementIp())
-                        currentBandwitdh = deviceStatus.parameters.throughputCapacity as Integer
-                        sourceEntitlement = deviceStatus.parameters.entitlementId
-                    } else if (deviceStatus.parameters.entitlementId == newEntitlement) {
-                        log.warn("Alteon already in new entitlement")
-                        deviceStatus = false
-                        results.add(new MigrateResults(deviceName, newEntitlement, newEntitlement, false,
-                                0, "Device already in new entitlement"))
-                    } else {
-                        log.error("Alteon don't have license")
-                        deviceStatus = false
-                        results.add(new MigrateResults(deviceName, '', '', false,
-                                0, "Alteon don't have license"))
-                    }
+            // check alteon status
+            def deviceStatus = httpWithRetry(VDIRECTIP, ALTEONSTATUS, mainAuthHeader, POST, baseContext)
+            if (deviceStatus) {
+                if ((deviceStatus.parameters.entitlementId != newEntitlement) &&
+                        (deviceStatus.parameters.throughputCapacity != "1") &&
+                        (deviceStatus.parameters.licenseEnabled)) {
+                    log.info String.format('alteon %s has license from other entitlement, continue.', deviceName)
+                    currentBandwitdh = deviceStatus.parameters.throughputCapacity as Integer
+                    sourceEntitlement = deviceStatus.parameters.entitlementId
+                } else if (deviceStatus.parameters.entitlementId == newEntitlement) {
+                    log.warn("Alteon already in new entitlement")
+                    deviceStatus = false
+                    results.add(new MigrateResults(deviceName, newEntitlement, newEntitlement, false,
+                            0, "Device already in new entitlement"))
                 } else {
-                    log.error String.format("failed to fetch alteon %s license status", device.getManagementIp())
+                    log.error("Alteon don't have license")
                     deviceStatus = false
                     results.add(new MigrateResults(deviceName, '', '', false,
-                            0, "Failed to fetch license status"))
+                            0, "Alteon don't have license"))
                 }
+            } else {
+                log.error String.format("failed to fetch alteon %s license status", deviceName)
+                deviceStatus = false
+                results.add(new MigrateResults(deviceName, '', '', false,
+                        0, "Failed to fetch license status"))
+            }
 
-                //check new entitlement has enough resources
-                def serverReport
-                if (deviceStatus) {
-                    serverReport = httpWithRetry(VDIRECTIP, SERVERREPORT, mainAuthHeader, POST, [:])
-                    if (serverReport) {
-                        def entitlementsObj = serverReport.parameters.entitlements
-                        if (entitlementsObj.containsKey(newEntitlement)) {
-                            def entitlementObj = entitlementsObj.get(newEntitlement)
-                            def featuresOBj = entitlementObj.features
-                            featuresOBj.each {
-                                if (it.featureName == 'throughput') {
-                                    featureCount = it.featureCount
-                                    used = it.used
-                                }
+            //check new entitlement has enough resources
+            def serverReport
+            if (deviceStatus) {
+                serverReport = httpWithRetry(VDIRECTIP, SERVERREPORT, mainAuthHeader, POST, [:])
+                if (serverReport) {
+                    def entitlementsObj = serverReport.parameters.entitlements
+                    if (entitlementsObj.containsKey(newEntitlement)) {
+                        def entitlementObj = entitlementsObj.get(newEntitlement)
+                        def featuresOBj = entitlementObj.features
+                        featuresOBj.each {
+                            if (it.featureName == 'throughput') {
+                                featureCount = it.featureCount
+                                used = it.used
                             }
-                            if (featureCount >= used + currentBandwitdh) {
-                                log.info String.format("there is enough throughput on entitlement continue.")
-                            } else {
-                                log.error("There isn't enough throughput left on entitlement")
-                                serverReport = false
-                                results.add(new MigrateResults(deviceName, sourceEntitlement, newEntitlement, false,
-                                        currentBandwitdh, "New Entitlement Can't satisfy requirements"))
-                            }
+                        }
+                        if (featureCount >= used + currentBandwitdh) {
+                            log.info String.format("there is enough throughput on entitlement continue.")
                         } else {
-                            log.error String.format("New Entitlement %s don't exists", newEntitlement)
+                            log.error("There isn't enough throughput left on entitlement")
                             serverReport = false
                             results.add(new MigrateResults(deviceName, sourceEntitlement, newEntitlement, false,
-                                    currentBandwitdh, "New Entitlement don't exists"))
+                                    currentBandwitdh, "New Entitlement Can't satisfy requirements"))
                         }
                     } else {
-                        log.error("failed to fetch server report")
+                        log.error String.format("New Entitlement %s don't exists", newEntitlement)
                         serverReport = false
-                        results.add(new MigrateResults(deviceName, '', '', false,
-                                currentBandwitdh, "Failed to fetch Server Report"))
-                    }
-                }
-
-                //alocate license if above passed ok
-                //json buildup
-                if (deviceStatus && serverReport) {
-                    def jsonAllocateLicense = new JsonBuilder()
-                    def baseContextAllocateLicense = jsonAllocateLicense alteon: deviceName, entitlement: newEntitlement,
-                            throughput: currentBandwitdh, addon: false
-                    def allocateLicense = httpWithRetry(VDIRECTIP, ALLOCATEALTEONLICENSE, mainAuthHeader, POST,
-                            jsonAllocateLicense.content)
-                    if (allocateLicense && allocateLicense.success) {
-                        log.info String.format("alteon IP %s passed migrate", deviceName)
-                        results.add(new MigrateResults(deviceName, sourceEntitlement, newEntitlement, true,
-                                currentBandwitdh, ""))
-                    } else {
-                        log.error String.format("alteon IP %s failed migrate", deviceName)
                         results.add(new MigrateResults(deviceName, sourceEntitlement, newEntitlement, false,
-                                currentBandwitdh, "Failed to Migrate"))
+                                currentBandwitdh, "New Entitlement don't exists"))
                     }
+                } else {
+                    log.error("failed to fetch server report")
+                    serverReport = false
+                    results.add(new MigrateResults(deviceName, '', '', false,
+                            currentBandwitdh, "Failed to fetch Server Report"))
                 }
-                log.info String.format("End Migrate of Alteon IP %s", device.getManagementIp())
             }
+
+            //alocate license if above passed ok
+            //json buildup
+            if (deviceStatus && serverReport) {
+                def jsonAllocateLicense = new JsonBuilder()
+                def baseContextAllocateLicense = jsonAllocateLicense alteon: deviceName, entitlement: newEntitlement,
+                        throughput: currentBandwitdh, addon: false
+                def allocateLicense = httpWithRetry(VDIRECTIP, ALLOCATEALTEONLICENSE, mainAuthHeader, POST,
+                        jsonAllocateLicense.content)
+                if (allocateLicense && allocateLicense.success) {
+                    log.info String.format("alteon IP %s passed migrate", deviceName)
+                    results.add(new MigrateResults(deviceName, sourceEntitlement, newEntitlement, true,
+                            currentBandwitdh, ""))
+                } else {
+                    log.error String.format("alteon IP %s failed migrate", deviceName)
+                    results.add(new MigrateResults(deviceName, sourceEntitlement, newEntitlement, false,
+                            currentBandwitdh, "Failed to Migrate"))
+                }
+            }
+            log.info String.format("End Migrate of Alteon IP %s", deviceName)
 
             workflow['output'] = results
         }
@@ -286,7 +280,7 @@ class GELMigrationTool {
         return engine.createTemplate(template).make(binding).toString()
     }
 
-    private RunnableAction fillDeviceWithStandaloneAdcNames (RunnableAction parameters) {
+    private RunnableAction fillDeviceWithStandaloneAdcNames(RunnableAction parameters) {
         parameters.getParameter('alteon').ifPresent { AdcTemplateParameter p ->
             p.setValues(getStandaloneAdcs())
         }
