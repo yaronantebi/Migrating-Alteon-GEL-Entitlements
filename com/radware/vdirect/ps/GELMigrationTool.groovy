@@ -186,7 +186,7 @@ class GELMigrationTool {
     }
 
     def httpWithRetry(siteIp, path, authHeader, method, inputData) {
-        int timeout = 3
+        int timeout = 10
         int retries = 0
         int counter = 3
         boolean actionPassed = false
