@@ -13,18 +13,35 @@ Download the release version of this project 'gelMigrationTool.zip' and upload i
 3. From this point forward you can re-use the workflow instance for each run operation.
 
 ## How to Use
-1. 'Alteon Array' - Select Alteon, one or more to be migrated.
-2. 'vDirect User Name' - vDirect User Name
-3. 'vDirect Password' - vDirect Password
-4. 'New Entitlement' - New Entitlement to be used
+### Migrate Different LLS Server
+1. Alteon Array - Select Alteon, one or more to be migrated.
+2. New Entitlement - New Entitlement to be used
+> Source\Destination LLS
+3. LLS IP
+4. LLS User Name
+5. LLS Password
+6. Auto find destination LLS Alteon device Name - Let the tool find the Alteon name on remote LLS.
+
+![](https://i.imgur.com/cSY3e7X.jpg)
+
+### Migrate Tool (Same LLS Server)
+1. Alteon Array - Select Alteon, one or more to be migrated.
+2. vDirect User Name
+3. vDirect Password
+4. New Entitlement - New Entitlement to be used
 
 ![](https://i.imgur.com/3qBekX7.png)
 
 ## Outputs
 - HTML
 
+![](https://i.imgur.com/35VfUi4.jpg)
+
 ![](https://i.imgur.com/yyiAazK.png)
+
 - RAW
+
+![](https://i.imgur.com/cIbu5am.jpg)
 
 ![](https://i.imgur.com/W2DANqS.png)
 
