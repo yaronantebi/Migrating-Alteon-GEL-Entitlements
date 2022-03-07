@@ -2,7 +2,7 @@
 <workflow xmlns="http://www.radware.com/vdirect"
           name="GEL Migration Tool"
           class="com.radware.vdirect.ps.GELMigrationTool"
-          version="1.6.2">
+          version="1.6.3">
     <title>GEL Entitlement Replacement Tool</title>
     <description>Migrating Alteon Entitlements</description>
     <tags>license</tags>

@@ -84,7 +84,7 @@ class GELMigrationTool {
 
         ips.each { ip ->
             if(InetAddressValidator.getInstance().isValidInet4Address(ip)){
-                log.info("Valid Ip -${ip}")
+                log.debug("Valid Ip - ${ip}")
             } else {
                 log.info("Invalid Ip - ${ip}")
             }
@@ -158,7 +158,7 @@ class GELMigrationTool {
 
             ips.each { ip ->
                 if(InetAddressValidator.getInstance().isValidInet4Address(ip)){
-                    log.info("Valid Ip -${ip}")
+                    log.debug("Valid Ip - ${ip}")
                     validIps.add(ip)
                 } else {
                     log.error("Invalid Ip - ${ip}")
@@ -456,7 +456,7 @@ class GELMigrationTool {
 
             ips.each { ip ->
                 if(InetAddressValidator.getInstance().isValidInet4Address(ip)){
-                    log.info("Valid Ip -${ip}")
+                    log.debug("Valid Ip - ${ip}")
                     validIps.add(ip)
                 } else {
                     log.error("Invalid Ip - ${ip}")
@@ -712,6 +712,7 @@ class GELMigrationTool {
                 adcToEntitlementMap[it.adcname] = entId
             }
         }
+        log.debug String.format("Entitlement Map: %s", adcToEntitlementMap)
 
         if (AlteonInputType){
             def validIps = []
@@ -720,10 +721,10 @@ class GELMigrationTool {
 
             ips.each { ip ->
                 if(InetAddressValidator.getInstance().isValidInet4Address(ip)){
-                    log.info("Valid Ip -${ip}")
+                    log.debug("Valid IP - ${ip}")
                     validIps.add(ip)
                 } else {
-                    log.error("Invalid Ip - ${ip}")
+                    log.error("Invalid IP - ${ip}")
                     results.add(new MigrateResults(ip, "", "", false,
                             0, "Invalid Ip - ${ip}", "",
                             "", "red"))
@@ -733,12 +734,16 @@ class GELMigrationTool {
         }
 
         alteonArr.each { deviceName ->
+            Integer featureCount
+            Integer used
+
             String deviceEntitlement = adcToEntitlementMap[deviceName]
             if (!deviceEntitlement){
                 results.add(new MigrateResults(deviceName, "notFound", "notFound",
                         false,0, "Failed to ReAllocate, Device Entitlement not Found","" +
                         "", "", "red"))
             }else{
+                log.debug String.format("Device %s, entitlement id %s", deviceName, deviceEntitlement)
                 /// add capacity check
                 //check new entitlement has enough resources
                 Boolean serverReport = true
@@ -749,8 +754,10 @@ class GELMigrationTool {
                         if (entitlementsObj.containsKey(deviceEntitlement)) {
                             def entitlementObj = entitlementsObj.get(deviceEntitlement)
                             def featuresOBj = entitlementObj.features
+                            log.debug String.format("feature list: %s", featuresOBj)
                             featuresOBj.each {
                                 if (it.featureName == 'throughput') {
+                                    log.debug String.format("throughput feature: %s", it)
                                     featureCount = it.featureCount
                                     used = it.used
                                 }
