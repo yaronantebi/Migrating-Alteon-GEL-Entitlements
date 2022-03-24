@@ -924,7 +924,7 @@ class GELMigrationTool {
         //HTTPBuilder http = new HTTPBuilder("http://${host}${path}")
 
         http.getClient().getParams().setParameter("http.connection.timeout", new Integer(10000))
-        http.getClient().getParams().setParameter("http.socket.timeout", new Integer(30000))
+        //http.getClient().getParams().setParameter("http.socket.timeout", new Integer(30000))
         http.ignoreSSLIssues()
         http.handler.failure = { resp, data ->
             throw new Exception(String.format('Failed call: URI- %s , Reason- %s', host + path, resp.statusLine))
