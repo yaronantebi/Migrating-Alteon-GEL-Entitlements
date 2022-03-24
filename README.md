@@ -13,6 +13,13 @@ Download the release version of this project 'gelMigrationTool.zip' and upload i
 3. From this point forward you can re-use the workflow instance for each run operation.
 
 ## How to Use
+
+## Shared Actions Info
+
+1. **Verify Entitlement Capacity Availability** – It checks on destination target LLS if there is enough throughput for entitlement to contain this ADC device.
+2. **Identify Dest Alteon Name by its IP** – Upon different ADC container name in target LLS, it will look on target LLS for the name by the IP address.
+3. **Verify Entitlement Type Compatibility** – It will check destination and source entitlement have the same package type.
+
 ### Migrate Different LLS Server
 1. Alteon Array - Select Alteon, one or more to be migrated.
 2. New Entitlement - New Entitlement to be used
