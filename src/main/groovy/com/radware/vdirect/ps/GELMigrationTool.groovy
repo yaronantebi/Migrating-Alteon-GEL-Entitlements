@@ -17,6 +17,7 @@ import com.radware.vdirect.scripting.RunnableAction
 import com.radware.vdirect.server.VDirectServerClient
 import groovy.json.JsonBuilder
 import groovy.text.GStringTemplateEngine
+import groovyx.net.http.ContentEncoding
 import groovyx.net.http.HTTPBuilder
 import org.apache.commons.lang3.ArrayUtils
 import org.codehaus.groovy.grails.validation.routines.InetAddressValidator
@@ -930,6 +931,7 @@ class GELMigrationTool {
             throw new Exception(String.format('Failed call: URI- %s , Reason- %s', host + path, resp.statusLine))
         }
         //http.headers.'Accept' = '*/*'
+        http.contentEncoding = ContentEncoding.Type.GZIP
         http.headers.'Accept' = 'application/json, text/plain, */*'
         http.headers.'Accept-Encoding' = 'gzip, deflate, br'
         http.headers.'Content-Type' = 'application/json'
